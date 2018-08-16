@@ -2,10 +2,10 @@
 Cleanup bibtex entries on the clipboard or grab them from a DOI.
 
 ## Description
-`cleanbib` is a python script built using the [python-bibtexparser](https://github.com/sciunto-org/python-bibtexparser) which accomplishes two simple tasks:
+`cleanbib` is a python script built using the [python-bibtexparser](https://github.com/sciunto-org/python-bibtexparser) library which accomplishes two simple tasks:
 
 1. If you have copied a bibtex entry (it exists on the clipboard) apply some formatting that is standard for physics journals and return the new bibtex entry to the clipboard.
-2. If you have a DOI, get the bibtex form http://dx.doi.org and format it as above.
+2. If you have a DOI, get the bibtex from http://dx.doi.org and format it as above.
 
 At present it uses a hard-coded dictionary for journal abbreviations.  This needs to be expanded upon.
 
