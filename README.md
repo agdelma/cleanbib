@@ -7,10 +7,12 @@ Cleanup bibtex entries on the clipboard or grab them from a DOI.
 1. If you have copied a bibtex entry (it exists on the clipboard) apply some formatting that is standard for physics journals and return the new bibtex entry to the clipboard.
 2. If you have a DOI, get the bibtex form http://dx.doi.org and format it as above.
 
-At present I'm using a hard-coded dictionary for journal abbreviations.  This needs to be corrected and expanded upon.
+At present it uses a hard-coded dictionary for journal abbreviations.  This needs to be expanded upon.
 
 ## Requirements
-Uses [docopt](https://github.com/docopt/docopt) for processing command line options, [pyperclip](https://github.com/asweigart/pyperclip) for communicating with the clipboard and [requests](http://docs.python-requests.org/en/master/) for getting the bibtex from a DOI.
+* [python-bibtexparser](https://github.com/sciunto-org/python-bibtexparser) for bibtex parsing
+* [docopt](https://github.com/docopt/docopt) for processing command line options * [pyperclip](https://github.com/asweigart/pyperclip) for communicating with the clipboard 
+* [requests](http://docs.python-requests.org/en/master/) for getting the bibtex from a DOI.
 
 ## Installation
 Clone via `clone https://github.com/agdelma/cleanbib.git cleanbib` and copy `cleanbib.py` to somewhere on your `$PATH`.
