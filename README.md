@@ -11,7 +11,8 @@ At present it uses a hard-coded dictionary for journal abbreviations.  This need
 
 ## Requirements
 * [python-bibtexparser](https://github.com/sciunto-org/python-bibtexparser) for bibtex parsing
-* [docopt](https://github.com/docopt/docopt) for processing command line options * [pyperclip](https://github.com/asweigart/pyperclip) for communicating with the clipboard 
+* [docopt](https://github.com/docopt/docopt) for processing command line options 
+* [pyperclip](https://github.com/asweigart/pyperclip) for communicating with the clipboard 
 * [requests](http://docs.python-requests.org/en/master/) for getting the bibtex from a DOI.
 
 ## Installation
