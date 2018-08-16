@@ -444,16 +444,6 @@ def bibtex_from_doi(doi):
     headers = { 'Accept': 'text/bibliography; style=bibtex', } 
     req = requests.get('http://dx.doi.org/%s'%doi, headers=headers)
 
-    # bibtex_entry = req.text
-
-    # find_labels = re.findall('(\S+)\s*=',bibtex_entry)
-    # for f in find_labels:
-    #     bibtex_entry = bibtex_entry.replace(f,'\n%s'%f)
-
-    # this matches the id name and adds a new line before it
-    # bibtex_entry = re.sub('(\S+)\s*=',r"\n  \1 = \0",bibtex_entry)
-    # bibtex_entry = bibtex_entry[1:-2] + '\n}'
-
     bibtex_entry = req.text.replace('},','},\n')
     bibtex_entry = bibtex_entry.replace('title','\ntitle')
     return bibtex_entry
@@ -481,15 +471,18 @@ def clean_names(names):
             authors += vname + ' '
 
         # last names
-        for lname in sname['last']:        
+        num_lname = len(sname['last'])
+        for j,lname in enumerate(sname['last']):
             authors += lname
-        if sname['jr']:
-            authors += ', '
+            if j < num_lname-1:
+                authors += ' '
+        authors += ', '
 
         # jr names
         for jname in sname['jr']:
             authors += jname
-        authors += ', '
+        if sname['jr']:
+            authors += ', '
 
         # first names (could be multiple 1st names for initials)
         num_fname = len(sname['first'])
@@ -500,7 +493,7 @@ def clean_names(names):
                 authors += fname + '.'
 
             # in case we have initials jammed together
-            elif fname.count('.') > 1:
+            elif fname.count('.') > 1 and '-' not in fname:
 
                 # split them up
                 init_l = fname.split('.')
@@ -562,8 +555,9 @@ def format(record):
         record['journal'] = journal_abbreviations[record['journal']]
 
     # strip multiple page numbers
-    if '-' in record['pages']:
-        record['pages'] = record['pages'].split('-')[0]
+    if 'pages' in record:
+        if '-' in record['pages']:
+            record['pages'] = record['pages'].split('-')[0]
 
     return record
 
