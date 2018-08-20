@@ -588,7 +588,7 @@ def main():
     # prepare a list of keys we want to delete from the entry
     remove_keys = ['month', 'keyword', 'language', 'read', 'rating',
                    'date-added', 'date-modified', 'abstract', 'local-url',
-                   'file', 'uri', 'ISSN', 'issn','keywords']
+                   'file', 'uri', 'ISSN', 'issn','keywords', 'numpages']
 
     # Strip those keys from the dictionary
     for paper in bib_database.entries:
