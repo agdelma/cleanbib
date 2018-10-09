@@ -20,6 +20,8 @@ Options:
 # parsing the .bib file and pyperclip for reading/writing to the clipboard and
 # docopt for the command line.
 
+# Need to checkout the list of journal abbreviations here: https://github.com/JabRef/jabref/blob/master/src/main/resources/journals/journalList.txt
+
 from __future__ import print_function
 import bibtexparser
 from docopt import docopt
@@ -271,6 +273,7 @@ journal_abbreviations = {'AIAA Journal': 'AIAA J.',
  'National Bureau of Standards (U.S.), Miscellaneous Publication': 'Natl. Bur. Stand. Misc. Publ. (U.S.)',
  'National Bureau of Standards (U.S.), Special Publication': 'Natl. Bur. Stand. Spec. Publ. (U.S.)',
  'Nature (London)': 'Nature ',
+ 'Nature Physics': 'Nature Phys.',
  'Naturwissenschaften': 'Naturwissenschaften',
  'New Journal of Physics': 'New J. Phys.',
  'Nuclear Data, Section A': 'Nucl. Data, Sec. A',
