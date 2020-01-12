@@ -1,4 +1,4 @@
-#! /usr/bin/env /opt/local/bin/python
+#! /usr/bin/env python
 
 """
 Description:
@@ -168,7 +168,7 @@ journal_abbreviations = {'AIAA Journal': 'AIAA J.',
  'International Journal of Quantum Chemistry': 'Int. J . Quantum Chem.',
  'International Journal of Quantum Chemistry, Part 1': 'Int. J. Quantum Chem. 1',
  'International Journal of Quantum Chemistry, Part 2': 'Int. J. Quantum Chem. 2',
- 'International Journal of Quantum Information': 'Int. J . Quantum Inf.',
+ 'International Journal of Quantum Information': 'Int. J. Quantum Inf.',
  'International Journal of Theoretical Physics': 'Int. J. Theor. Phys.',
  'Izvestiya Akademii Nauk SSSR, Fizika Atmosfery i Okeana [Izvestiya, Academy of Sciences, USSR, Atmospheric and Oceanic Physics]': 'Izv. Acad. Nauk SSSR, Fiz. Atmos. Okeana [Izv. Acad. Sci. USSR, Atmos. Oceanic Phys]',
  'Izvestiya Akademii Nauk SSSR, Fizika Zemli [Izvestiya, Academy of Sciences, USSR, Physics of the Solid Earth]': 'Izv. Acad. Nauk SSSR, Fiz. Zemli.  [Izv. Acad. Sci. USSR, Phys. Solid Earth]',
@@ -211,6 +211,7 @@ journal_abbreviations = {'AIAA Journal': 'AIAA J.',
  'Journal of Nuclear Energy': 'J. Nucl. Energy',
  'Journal of Nuclear Energy, Part C: Plasma Physics, Accelerators, Thermonuclear Research': 'J. Nucl. Energy, Part C',
  'Journal of Nuclear Materials': 'J. Nucl. Mater.',
+ 'Journal of Open Source Software': 'J. Open Source Softw.',
  'Journal of Physical Chemistry': 'J. Phys. Chem.',
  'Journal of Physical and Chemical Reference Data': 'J. Phys. Chem. Ref. Data',
  'Journal of Physics (Moscow)': 'J. Phys. (Moscow)',
@@ -402,6 +403,7 @@ journal_abbreviations = {'AIAA Journal': 'AIAA J.',
  'Spectrochimica Acta, Part B: Atomic Spectroscopy': 'Spectrochim. Acta, Part B',
  'Surface Science': 'Surf. Sci.',
  'Teplofizika Vysokikh Temperatur [High Temperature (USSR)]': 'Teplofiz. Vys. Temp. [High Temp. (USSR)]',
+ 'The Journal of Physical Chemistry B': 'J. Phys. Chem. B',
  'Theoretica Chimica Acta': 'Theor. Chim. Acta',
  'Thin Solid Films': 'Thin Solid Films',
  'Transactions of the American Crystallographic Association': 'Trans. Am. Crystallogr. Assoc.',
@@ -443,14 +445,56 @@ journal_abbreviations = {'AIAA Journal': 'AIAA J.',
  'Zhurnal Tekhnicheskoi Fiziki [Soviet Physics-Technical Physics]': 'Zh. Tekh. Fiz. [Sov. Phys. Tech. Phys]'}
 
 # -------------------------------------------------------------------------------
+def remove_text_inside_brackets(text, brackets="()[]{}"):
+    count = [0] * (len(brackets) // 2) # count open/close brackets
+    saved_chars = []
+    for character in text:
+        for i, b in enumerate(brackets):
+            if character == b: # found bracket
+                kind, is_close = divmod(i, 2)
+                count[kind] += (-1)**is_close # `+1`: open, `-1`: close
+                if count[kind] < 0: # unbalanced bracket
+                    count[kind] = 0  # keep it
+                else:  # found bracket to remove
+                    break
+        else: # character is not a [balanced] bracket
+            if not any(count): # outside brackets
+                saved_chars.append(character)
+    return ''.join(saved_chars)
+
+# -------------------------------------------------------------------------------
+def pretty_print_POST(req):
+    """
+    At this point it is completely built and ready
+    to be fired; it is "prepared".
+
+    However pay attention at the formatting used in 
+    this function because it is programmed to be pretty 
+    printed and may differ from the actual request.
+    """
+    print('{}\n{}\n{}\n\n{}'.format(
+        '-----------START-----------',
+        req.method + ' ' + req.url,
+        '\n'.join('{}: {}'.format(k, v) for k, v in req.headers.items()),
+        req.body,
+    ))
+
+# -------------------------------------------------------------------------------
 def bibtex_from_doi(doi):
     """Return a bibtex text record from a doi."""
 
-    headers = { 'Accept': 'text/bibliography; style=bibtex', } 
-    req = requests.get('http://dx.doi.org/%s'%doi, headers=headers)
+    # old method
+    #headers = { 'Accept': 'text/bibliography; style=bibtex; charset=utf-8', } 
+    # req = requests.get(f'https://dx.doi.org/{doi}', headers=headers)
+    # bibtex_entry = req.text.replace('},','},\n')
+    # bibtex_entry = bibtex_entry.replace('title','\ntitle')
+    # req1 = requests.Request('POST','http://dx.doi.org/%s'%doi, headers=headers)
+    # pretty_print_POST(req1.prepare())
 
-    bibtex_entry = req.text.replace('},','},\n')
-    bibtex_entry = bibtex_entry.replace('title','\ntitle')
+    headers = { 'Accept': 'application/x-bibtex; charset=utf-8', } 
+    req = requests.get(f'https://doi.org/{doi}', headers=headers)
+    bibtex_entry = req.text
+
     return bibtex_entry
 
 # -------------------------------------------------------------------------------
@@ -463,6 +507,7 @@ def clean_names(names):
 
     authors = ''
     num_authors = len(names)
+    lname_prefix = ['Del','del','De','de']
 
     # We want the authors to be listed as: von Last, Jr, First
     # where multiple initials are separated by a tilde, i.e A.~D.
@@ -474,6 +519,22 @@ def clean_names(names):
         # von names
         for vname in sname['von']:
             authors += vname + ' '
+
+        # delete any latex garbage in first names
+        if len(sname['first']) > 1:
+            for j,fname in enumerate(sname['first']):
+                if '{' in fname and '}' in fname:
+                    fname_ = remove_text_inside_brackets(fname)
+                    sname['first'][j] = fname_
+
+        # check if "Del" or "De" or "del" or "de" have been mistakingly added
+        # to the first name
+        for lname_p in lname_prefix:
+            if len(sname['first']) > 1 and lname_p in sname['first']:
+                # remove prefix from first name list
+                sname['first'].remove(lname_p)
+                # add it to front of last name
+                sname['last'][0] = '{' + lname_p + ' ' +  sname['last'][0] + '}'
 
         # last names
         num_lname = len(sname['last'])
@@ -539,18 +600,37 @@ def format(record):
     record['author'] = record['author'].replace('~',' ')
 
     # fix bad latex
-    record = bibtexparser.customization.homogenize_latex_encoding(record)
+    #record = bibtexparser.customization.homogenize_latex_encoding(record)
 
     # split authors into list
     record = bibtexparser.customization.author(record)
 
+    # protect uppercase in title
+    record['title'] = bibtexparser.latexenc.protect_uppercase(record['title'])
+    # record['title'] = bibtexparser.latexenc.string_to_latex(record['title'])
+
+    # Extract page number from DOI if it doesn't exist
+    # This is currently needed for APS journals
+    if 'pages' not in record:
+        record['pages'] = record['doi'].split('.')[-1]
+
+    # If using a doi url lookup, find the re-direct
+    if 'url' in record:
+        record['url'] = requests.get(record['url']).url
+
     # generate a new cite-key (if appropriate)
     # standard is FirstAuthorLastName:YearXX where XX are two random 
-    # characters to avoid duplicates
+    # characters to avoid duplicates. 
+    # Remove any spaces in last names.
     if ':' not in record['ID']:
         cite_key = record['author'][0].split(',')[0] + ':' + record['year']\
             + ''.join([choice(ascii_letters[:26]) for i in range(2)])
-        record['ID'] = cite_key
+        record['ID'] = cite_key.replace(' ','')
+
+        # in the rare case there are accents in the first author's name
+        # just delete them
+        if '{' in record['ID'] and '}' in record['ID']:
+            record['ID'] = remove_text_inside_brackets(record['ID'])
     
     # format author's names 
     record['author'] = clean_names(record['author'])
@@ -559,10 +639,10 @@ def format(record):
     if record['journal'] in journal_abbreviations:
         record['journal'] = journal_abbreviations[record['journal']]
 
-    # strip multiple page numbers
+    # strip multiple page numbers or unicode characters in page range
+    # i.e. just grab the first number
     if 'pages' in record:
-        if '-' in record['pages']:
-            record['pages'] = record['pages'].split('-')[0]
+        record['pages'] = re.search(r'\d+', record['pages']).group()
 
     return record
 
